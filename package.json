@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "compile": "npx hardhat compile",
-    "test": "npx hardhat test"
+    "test": "npx hardhat test",
+    "deploy": "npx hardhat run --network testnet scripts/deploy.ts",
+    "deploy-ignition": "npx hardhat ignition deploy ignition/modules/Vault.ts --network testnet"
   },
   "author": "",
   "license": "ISC",
