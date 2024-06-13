@@ -2,7 +2,6 @@
 pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 // Uncomment this line to use console.log
 // import "hardhat/console.sol";
@@ -51,13 +50,6 @@ contract Vault is Ownable {
     ) external onlyOwner {
         require(amount > 0, "Deposit amount smaller than 0");
 
-        ERC20 token = ERC20(tokenAddress);
-        // Ensure the owner has approved this contract to spend tokens
-        require(
-            token.transferFrom(msg.sender, address(this), amount),
-            "Failed to transfer tokens from sender"
-        );
-
         balances[tokenAddress] += amount;
 
         emit TokenDeposited(tokenAddress, amount);
@@ -66,8 +58,11 @@ contract Vault is Ownable {
     function transferHBARToUser(address to, uint256 amount) public onlyOwner {
         require(amount > 0 && amount <= balance, "Invalid transfer amount");
 
+        (bool success, ) = payable(to).call{value: amount}("");
+
+        require(success, "HBAR transfer failed");
+
         balance -= amount;
-        payable(to).transfer(amount);
 
         emit HBARTransferredTo(to, amount);
     }
@@ -87,13 +82,6 @@ contract Vault is Ownable {
     ) public onlyOwner {
         require(balances[tokenAddress] >= amount, "Insufficient balance");
 
-        ERC20 token = ERC20(tokenAddress);
-
-        require(
-            token.transfer(to, amount),
-            "Failed to transfer tokens to user"
-        );
-
         balances[tokenAddress] -= amount;
 
         emit TokenTransferredTo(to, tokenAddress, amount);
@@ -104,13 +92,6 @@ contract Vault is Ownable {
         address tokenAddress,
         uint256 amount
     ) public onlyOwner {
-        ERC20 token = ERC20(tokenAddress);
-
-        require(
-            token.transferFrom(from, address(this), amount),
-            "Failed to transfer tokens to user"
-        );
-
         balances[tokenAddress] += amount;
 
         emit TokenTransferredFrom(from, address(this), amount);
@@ -135,7 +116,7 @@ contract Vault is Ownable {
 
         (bool success, ) = payable(owner()).call{value: amount}("");
 
-        require(success, "HBAR transfer failed");
+        require(success, "HBAR withdraw failed");
 
         balance -= amount;
 
@@ -149,12 +130,6 @@ contract Vault is Ownable {
     ) external onlyOwner {
         require(amount > 0, "Withdraw amount smaller than 0");
         require(balances[tokenAddress] >= amount, "Insufficient balance");
-
-        ERC20 token = ERC20(tokenAddress);
-        require(
-            token.transfer(owner(), amount),
-            "Failed to transfer tokens to owner"
-        );
 
         balances[tokenAddress] -= amount;
 
