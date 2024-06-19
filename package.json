@@ -7,14 +7,15 @@
     "compile": "npx hardhat compile",
     "test": "npx hardhat test",
     "deploy": "npx hardhat run --network testnet scripts/deploy.ts",
-    "deploy-ignition": "npx hardhat ignition deploy ignition/modules/Vault.ts --network testnet"
+    "deploy-ignition:hts": "npx hardhat ignition deploy ignition/modules/HTS.ts --network testnet",
+    "deploy-ignition:vault": "npx hardhat ignition deploy ignition/modules/Vault.ts --network testnet"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "@nomicfoundation/hardhat-ignition-ethers": "^0.15.0",
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
-    "hardhat": "^2.22.1"
+    "hardhat": "^2.22.5"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.0.2",
