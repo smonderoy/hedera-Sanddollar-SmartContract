@@ -7,8 +7,7 @@
     "compile": "npx hardhat compile",
     "test": "npx hardhat test",
     "deploy": "npx hardhat run --network testnet scripts/deploy.ts",
-    "deploy-ignition:hts": "npx hardhat ignition deploy ignition/modules/HTS.ts --network testnet",
-    "deploy-ignition:vault": "npx hardhat ignition deploy ignition/modules/Vault.ts --network testnet"
+    "deploy-ignition": "npx hardhat ignition deploy ignition/modules/Vault.ts --network testnet"
   },
   "author": "",
   "license": "ISC",

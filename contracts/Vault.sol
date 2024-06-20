@@ -4,16 +4,17 @@ pragma solidity >=0.5.0 <0.9.0;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
-import "./HTS/HederaTokenService.sol";
+import "./HTS/IHederaTokenService.sol";
 import "./HTS/HederaResponseCodes.sol";
 
 // Uncomment this line to use console.log
 // import "hardhat/console.sol";
 
-contract Vault is HederaTokenService, Ownable {
+contract Vault is Ownable {
+    address constant precompileAddress = address(0x167);
+
     mapping(address => uint256) public balances;
     uint256 public balance;
-    address private htsAddress;
 
     event HBARDeposited(uint256 amount);
     event TokenDeposited(address tokenAddress, uint256 amount);
@@ -39,9 +40,7 @@ contract Vault is HederaTokenService, Ownable {
         address to
     );
 
-    constructor(address _htsAddress) Ownable(msg.sender) {
-        htsAddress = _htsAddress;
-    }
+    constructor() Ownable(msg.sender) {}
 
     function depositHBAR() public payable {
         require(msg.value > 0, "Deposit amount smaller than 0");
@@ -57,11 +56,9 @@ contract Vault is HederaTokenService, Ownable {
     ) external onlyOwner {
         require(amount > 0, "Deposit amount smaller than 0");
 
-        require(htsAddress != address(0), "Invalid hedera service");
-
-        (bool success, bytes memory result) = htsAddress.call(
-            abi.encodeWithSignature(
-                "associateToken(address,address)",
+        (bool success, bytes memory result) = precompileAddress.call(
+            abi.encodeWithSelector(
+                IHederaTokenService.associateToken.selector,
                 address(this),
                 tokenAddress
             )
@@ -79,9 +76,9 @@ contract Vault is HederaTokenService, Ownable {
 
         balances[tokenAddress] += amount;
 
-        (bool success1, bytes memory result1) = htsAddress.call(
-            abi.encodeWithSignature(
-                "transferFrom(address,address,address,uint256)",
+        (bool success1, bytes memory result1) = precompileAddress.call(
+            abi.encodeWithSelector(
+                IHederaTokenService.transferFrom.selector,
                 tokenAddress,
                 msg.sender,
                 address(this),
@@ -93,7 +90,10 @@ contract Vault is HederaTokenService, Ownable {
 
         require(success1, "Token deposit failed");
 
-        require(code1 == HederaResponseCodes.SUCCESS, Strings.toStringSigned(code1));
+        require(
+            code1 == HederaResponseCodes.SUCCESS,
+            Strings.toStringSigned(code1)
+        );
 
         emit TokenDeposited(tokenAddress, amount);
     }
@@ -127,13 +127,11 @@ contract Vault is HederaTokenService, Ownable {
 
         require(balances[tokenAddress] >= amount, "Insufficient balance");
 
-        require(htsAddress != address(0), "Invalid hedera service");
-
         balances[tokenAddress] -= amount;
 
-        (bool success, bytes memory result) = htsAddress.call(
-            abi.encodeWithSignature(
-                "transferToken(address,address,address,int64)",
+        (bool success, bytes memory result) = precompileAddress.call(
+            abi.encodeWithSelector(
+                IHederaTokenService.transferToken.selector,
                 tokenAddress,
                 address(this),
                 to,
@@ -158,13 +156,11 @@ contract Vault is HederaTokenService, Ownable {
     ) public onlyOwner {
         require(amount > 0, "Invalid transfer amount");
 
-        require(htsAddress != address(0), "Invalid hedera service");
-
         balances[tokenAddress] += amount;
 
-        (bool success, bytes memory result) = htsAddress.call(
-            abi.encodeWithSignature(
-                "transferFrom(address,address,address,uint256)",
+        (bool success, bytes memory result) = precompileAddress.call(
+            abi.encodeWithSelector(
+                IHederaTokenService.transferFrom.selector,
                 tokenAddress,
                 from,
                 address(this),
@@ -217,16 +213,14 @@ contract Vault is HederaTokenService, Ownable {
 
         require(balances[tokenAddress] >= amount, "Insufficient balance");
 
-        require(htsAddress != address(0), "Invalid hedera service");
-
         balances[tokenAddress] -= amount;
 
-        (bool success, bytes memory result) = htsAddress.call(
-            abi.encodeWithSignature(
-                "transferToken(address,address,address,int64)",
+        (bool success, bytes memory result) = precompileAddress.call(
+            abi.encodeWithSelector(
+                IHederaTokenService.transferToken.selector,
                 tokenAddress,
                 address(this),
-                owner(),
+                msg.sender,
                 amount
             )
         );
