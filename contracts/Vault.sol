@@ -14,6 +14,7 @@ contract Vault is Ownable {
     address constant precompileAddress = address(0x167);
 
     mapping(address => uint256) public balances;
+    address[] tokens;
     uint256 public balance;
 
     event HBARDeposited(uint256 amount);
@@ -74,6 +75,10 @@ contract Vault is Ownable {
             "Token associate failed"
         );
 
+        if (balances[tokenAddress] == 0) {
+            // check if the key is new
+            tokens.push(tokenAddress);
+        }
         balances[tokenAddress] += amount;
 
         (bool success1, bytes memory result1) = precompileAddress.call(
@@ -233,5 +238,16 @@ contract Vault is Ownable {
         );
 
         emit TokenWithdrawn(tokenAddress, amount);
+    }
+
+    function getBalance() public view returns (address[] memory, uint256[] memory) {
+        uint size = tokens.length;
+        uint256[] memory values = new uint256[](size);
+
+        for (uint i = 0; i < size; i++) {
+            values[i] = balances[tokens[i]];
+        }
+
+        return (tokens, values);
     }
 }
